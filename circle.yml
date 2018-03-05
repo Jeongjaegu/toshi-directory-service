@@ -1,0 +1,34 @@
+machine:
+  python:
+    version: 3.6.4
+  node:
+    version: 6.7.0
+  environment:
+    PATH: "${PATH}:${HOME}/.yarn/bin"
+
+dependencies:
+  pre:
+    - pip install -r requirements-testing.txt
+    - ./configure_environment.sh
+    - pip install --upgrade -r requirements.txt
+  post:
+    - yarn global --cache-folder ~/.yarn/cache add aglio --prefix ~/.yarn
+  cache_directories:
+    - ~/.yarn
+
+test:
+  override:
+    - python -m tornado.testing discover -s toshidirectory/test
+
+deployment:
+  development:
+    branch: master
+    commands:
+      - git clone --depth 1 git@github.com:toshiapp/docs.git $HOME/docs
+      - $HOME/docs/deploy-blueprint.sh $CIRCLE_PROJECT_REPONAME docs/api.apib $CIRCLE_SHA1
+      - git push -f git@heroku.com:token-dir-service-development.git $CIRCLE_SHA1:master
+  production:
+    branch: production
+    commands:
+      - git push -f git@heroku.com:token-dir-service.git $CIRCLE_SHA1:master
+      - git push -f git@heroku.com:toshi-dir-service.git $CIRCLE_SHA1:master

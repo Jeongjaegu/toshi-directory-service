@@ -1,0 +1,3 @@
+#PYTHON3
+asyncpg==0.15.0
+regex

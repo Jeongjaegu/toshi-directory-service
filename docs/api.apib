@@ -1,0 +1,120 @@
+FORMAT: 1A
+HOST: https://directory.service.toshi.org
+
+# Toshi Directory Service
+
+This service provides lists of Ethereum Dapps. It provides index, curation, and search functionalities.
+
+
+# Group Dapps
+
+## Dapp Search [/v1/dapps/]
++ Parameters
+    + offset: `80` (integer, optional) - Paging offset
+      + Default: `0`
+    + limit: `20` (integer, optional) - Page size
+      + Default: `10`
+    + query: `Crypto` (string, optional) - A search query to filter results by
+      + Default: `""`
+    + category: `10` (integer, optional) - Only return dapps matching the given category
+      + Default: `null`
+
+### Fetch list of dapps [GET]
++ Response 200 (application/json)
+  + Body
+    {
+      "results": {
+        "dapps": [{
+          "name": "World of Ether",
+          "id": 12345,
+          "url": "https://worldofether.com",
+          "icon": "https://www.toshi.org/icon.png",
+          "cover": "https://www.toshi.org/cover.png",
+          "description": "Store, sell and breed your valuable Etherians on the Ethereum blockchain",
+          "categories": [1]
+        }, {
+          "name": "CryptoKitties",
+          "id": 12346,
+          "url": "https://worldofether.com",
+          "icon": "https://www.toshi.org/icon.png",
+          "cover": "https://www.toshi.org/cover.png",
+          "description": "Store, sell and breed Kittens on the Ethereum blockchain",
+          "categories": [2]
+        }],
+        "categories": {
+          1: "Games and Collectibles",
+          2: "Exchanges"
+        },
+      },
+      "offset": 0,
+      "limit": 10,
+      "total": 100,
+      "query": "",
+      "category": null
+    }
+
+
+## Dapp Frontpage [/v1/dapps/frontpage]
+
+### Fetch curated list of dapps [GET]
++ Response 200 (application/json)
+  + Body
+      {
+        "sections": [{
+          "category_id": 100000,
+          "type": "cards",
+          "dapps": [{
+            "name": "World of Ether",
+            "id": 12345,
+            "url": "https://worldofether.com",
+            "icon": "https://www.toshi.org/icon.png",
+            "cover": "https://www.toshi.org/cover.png",
+            "description": "Store, sell and breed your valuable Etherians on the Ethereum blockchain",
+            "categories": [1]
+          }, {
+            "name": "CryptoKitties",
+            "id": 12346,
+            "url": "https://worldofether.com",
+            "icon": "https://www.toshi.org/icon.png",
+            "cover": "https://www.toshi.org/cover.png",
+            "description": "Store, sell and breed Kittens on the Ethereum blockchain",
+            "categories": [2,3]
+          }],
+        }, {
+          "category_id": 1,
+          "type": "list",
+          "data": {
+            "dapps": [
+              "name": "World of Ether",
+              "categories": [1,2,3],
+              "..."
+            ]
+          }
+        }],
+        "categories": {
+          1: "Games and Collectibles",
+          2: "Exchanges",
+          3: "...",
+          100000: "Featured Apps"
+        }
+      }
+
+## Dapp Profile [/v1/dapp/{dapp_id}]
+
+### Fetch a specific dapp [GET]
++ Response 200 (application/json)
+  + Body
+    {
+      "dapp": {
+        "name": "World of Ether",
+        "id": 12345,
+        "url": "https://worldofether.com",
+        "icon": "https://www.toshi.org/icon.png",
+        "cover": "https://www.toshi.org/cover.png",
+        "description": "Store, sell and breed your valuable Etherians on the Ethereum blockchain",
+        "categories": [1]
+      },
+      "categories": {
+        1: "Games and Collectibles"
+      }
+    }
