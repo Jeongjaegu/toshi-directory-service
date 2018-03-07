@@ -1,4 +1,5 @@
 import datetime
+import sys
 
 from tornado.escape import json_decode
 from tornado.testing import gen_test
@@ -198,8 +199,21 @@ TEST_DAPP_CATEGORY_DATA = [
 TEST_CATEGORY_DATA_AS_MAP = {
     cat_id: name for cat_id, name in TEST_CATEGORY_DATA
 }
-ALL_DAPPS_SORTED = sorted(TEST_DAPP_DATA, key=lambda e: e[1])
-GAMES_AND_COLLECTIBLES_SORTED = [y for y in sorted(TEST_DAPP_DATA, key=lambda e: e[1]) if y[0] in [x[0] for x in TEST_DAPP_CATEGORY_DATA if x[1] == 1]]
+# NOTE: this is a hacky way to ensure tests pass on linux and mac
+# the issue being that postgres by default is installed with
+# different LC_COLLATE settings between linux (using "en_GB.UTF-8") and
+# mac (using "C", at least when installing via brew) and this effects
+# the sort order of "ORDER BY {VARCHAR}" operations.
+if sys.platform == 'linux':
+    ALL_DAPPS_SORTED = sorted(TEST_DAPP_DATA, key=lambda e: e[1].replace(' ', '').lower())
+    GAMES_AND_COLLECTIBLES_SORTED = [y for y in sorted(TEST_DAPP_DATA, key=lambda e: e[1].replace(' ', '').lower()) if y[0] in [x[0] for x in TEST_DAPP_CATEGORY_DATA if x[1] == 1]]
+elif sys.platform == 'darwin':
+    ALL_DAPPS_SORTED = sorted(TEST_DAPP_DATA, key=lambda e: e[1])
+    GAMES_AND_COLLECTIBLES_SORTED = [y for y in sorted(TEST_DAPP_DATA, key=lambda e: e[1]) if y[0] in [x[0] for x in TEST_DAPP_CATEGORY_DATA if x[1] == 1]]
+else:
+    print("Unsupported system.platform '{}'".format(sys.platform))
+    sys.exit(1)
+
 GAMES_AND_COLLECTIBLES_CATEGORY = 1
 TEST_QUERY = 'ether'
 DAPPS_WITH_QUERY_IN_NAME_SORTED = [x for x in ALL_DAPPS_SORTED if TEST_QUERY in x[1].lower()]
@@ -295,10 +309,10 @@ class DappSearchHandlerTest(DappsTestBase):
         self.assertEqual(body['category'], expected_category)
 
         used_categories = set()
-        for result, expected in zip(dapps, expected_results):
+        for index, (result, expected) in enumerate(zip(dapps, expected_results)):
             self.assertEqual(len(result), 7)
+            self.assertEqual(result['name'], expected[1], "mismatched results at index: {}".format(index))
             self.assertEqual(result['dapp_id'], expected[0])
-            self.assertEqual(result['name'], expected[1])
             self.assertEqual(result['url'], expected[2])
             self.assertEqual(result['description'], expected[3])
             self.assertEqual(result['icon'], expected[4])
