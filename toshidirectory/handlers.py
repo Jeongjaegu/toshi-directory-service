@@ -135,7 +135,15 @@ class DappSearchHandler(DatabaseMixin, BaseHandler):
             query = self.get_argument('query', '')
 
             dapps, total = await get_apps_by_filter(self.db, category, query, limit, offset)
-            categories = get_categories_in_dapps(dapps)
+
+            used_categories = get_categories_in_dapps(dapps)
+            all_categories = await self.db.fetch('SELECT * FROM categories')
+            categories = {}
+
+            for cat in all_categories:
+                category_id = cat['category_id']
+                if category_id in used_categories:
+                    categories[category_id] = cat['name']
 
             self.write({
                 'results'   : {

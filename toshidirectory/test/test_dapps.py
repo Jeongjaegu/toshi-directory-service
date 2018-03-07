@@ -195,6 +195,9 @@ TEST_DAPP_CATEGORY_DATA = [
     (1721937401460294677, 1)
 ]
 
+TEST_CATEGORY_DATA_AS_MAP = {
+    cat_id: name for cat_id, name in TEST_CATEGORY_DATA
+}
 ALL_DAPPS_SORTED = sorted(TEST_DAPP_DATA, key=lambda e: e[1])
 GAMES_AND_COLLECTIBLES_SORTED = [y for y in sorted(TEST_DAPP_DATA, key=lambda e: e[1]) if y[0] in [x[0] for x in TEST_DAPP_CATEGORY_DATA if x[1] == 1]]
 GAMES_AND_COLLECTIBLES_CATEGORY = 1
@@ -266,6 +269,9 @@ class FrontpageHandlerTest(DappsTestBase):
             self.assertEqual(len(result['categories']), len(expected_categories))
             for cat in result['categories']:
                 self.assertIn(cat, expected_categories)
+        for cat in body['categories']:
+            self.assertEqual(body['categories'][cat], TEST_CATEGORY_DATA_AS_MAP[int(cat)])
+
 
 class DappSearchHandlerTest(DappsTestBase):
 
@@ -304,8 +310,9 @@ class DappSearchHandlerTest(DappsTestBase):
                 used_categories.add(cat)
         # make sure all the categories used by dapps in this query (and no more) are present in the body
         self.assertEqual(len(used_categories), len(body['results']['categories']))
-        for category in used_categories:
-            self.assertIn(category, body['results']['categories'])
+        for cat in used_categories:
+            self.assertIn(str(cat), body['results']['categories'])
+            self.assertEqual(body['results']['categories'][str(cat)], TEST_CATEGORY_DATA_AS_MAP[cat])
 
     @gen_test
     @requires_database
