@@ -29,11 +29,12 @@ async def map_dapp(dapp_id, db, dapp=None):
 
 async def get_apps_by_category(category_id, db):
     dapps = []
-    dapps_ids = await db.fetch('SELECT dapp_id FROM dapp_categories WHERE category_id = $1', int(category_id))
-    for dapp in dapps_ids:
-        mapped_app = await map_dapp(dapp['dapp_id'], db)
+    queried_dapps = await db.fetch('SELECT DA.dapp_id, DA.name, DA.url, DA.description, DA.icon, DA.cover FROM dapps as DA, dapp_categories as CAT ' 
+                                   'WHERE DA.dapp_id = CAT.dapp_id AND category_id = $1  ORDER BY DA.name LIMIT $2' , int(category_id), DAPPS_PER_CATEGORY)
+    for dapp in queried_dapps:
+        mapped_app = await map_dapp(dapp['dapp_id'], db, dapp)
         dapps.append(mapped_app['dapp'])
-    dapps = sorted(dapps, key=lambda e: e['name'])[:DAPPS_PER_CATEGORY]
+
     return dapps
 
 async def get_apps_by_filter(db, category_id=None, query='', limit=MAX_DAPP_SEARCH_LIMIT, offset=0):
