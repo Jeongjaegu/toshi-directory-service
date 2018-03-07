@@ -276,7 +276,7 @@ class DappSearchHandlerTest(DappsTestBase):
         self.assertIn("categories", body["results"])
         dapps = body["results"]["dapps"]
 
-        self.assertEqual(len(dapps), expected_limit)
+        self.assertEqual(len(dapps), len(expected_results))
         self.assertIn("limit", body)
         self.assertEqual(body['limit'], expected_limit)
         self.assertIn("offset", body)
@@ -289,7 +289,7 @@ class DappSearchHandlerTest(DappsTestBase):
         self.assertEqual(body['category'], expected_category)
 
         used_categories = set()
-        for result, expected in zip(dapps, ALL_DAPPS_SORTED[:DEFAULT_DAPP_SEARCH_LIMIT]):
+        for result, expected in zip(dapps, expected_results):
             self.assertEqual(len(result), 7)
             self.assertEqual(result['dapp_id'], expected[0])
             self.assertEqual(result['name'], expected[1])
@@ -303,7 +303,7 @@ class DappSearchHandlerTest(DappsTestBase):
                 self.assertIn(cat, expected_categories)
                 used_categories.add(cat)
         # make sure all the categories used by dapps in this query (and no more) are present in the body
-        self.assertEqual(len(used_categories), body['results']['categories'])
+        self.assertEqual(len(used_categories), len(body['results']['categories']))
         for category in used_categories:
             self.assertIn(category, body['results']['categories'])
 
@@ -440,21 +440,21 @@ class DappSearchHandlerTest(DappsTestBase):
         self.assertResponseCodeEqual(resp, 200)
         body = json_decode(resp.body)
 
-        self.assertDappSearchResults(body, "", 0, limit, len(GAMES_AND_COLLECTIBLES_WITH_QUERY_IN_NAME_SORTED),
+        self.assertDappSearchResults(body, TEST_QUERY, 0, limit, len(GAMES_AND_COLLECTIBLES_WITH_QUERY_IN_NAME_SORTED),
                                      GAMES_AND_COLLECTIBLES_WITH_QUERY_IN_NAME_SORTED[:limit], GAMES_AND_COLLECTIBLES_CATEGORY)
 
-        resp = await self.fetch("/dapps?offset={}&limit={}&category={}".format(limit, limit, GAMES_AND_COLLECTIBLES_CATEGORY))
+        resp = await self.fetch("/dapps?offset={}&limit={}&category={}&query={}".format(limit, limit, GAMES_AND_COLLECTIBLES_CATEGORY, TEST_QUERY))
         self.assertResponseCodeEqual(resp, 200)
         body = json_decode(resp.body)
 
-        self.assertDappSearchResults(body, "", limit, limit, len(GAMES_AND_COLLECTIBLES_WITH_QUERY_IN_NAME_SORTED),
+        self.assertDappSearchResults(body, TEST_QUERY, limit, limit, len(GAMES_AND_COLLECTIBLES_WITH_QUERY_IN_NAME_SORTED),
                                      GAMES_AND_COLLECTIBLES_WITH_QUERY_IN_NAME_SORTED[limit:limit * 2], GAMES_AND_COLLECTIBLES_CATEGORY)
 
-        resp = await self.fetch("/dapps?offset={}&limit={}&category={}".format(limit * 2, limit, GAMES_AND_COLLECTIBLES_CATEGORY))
+        resp = await self.fetch("/dapps?offset={}&limit={}&category={}&query={}".format(limit * 2, limit, GAMES_AND_COLLECTIBLES_CATEGORY, TEST_QUERY))
         self.assertResponseCodeEqual(resp, 200)
         body = json_decode(resp.body)
 
-        self.assertDappSearchResults(body, "", limit * 2, limit, len(GAMES_AND_COLLECTIBLES_WITH_QUERY_IN_NAME_SORTED),
+        self.assertDappSearchResults(body, TEST_QUERY, limit * 2, limit, len(GAMES_AND_COLLECTIBLES_WITH_QUERY_IN_NAME_SORTED),
                                      GAMES_AND_COLLECTIBLES_WITH_QUERY_IN_NAME_SORTED[limit * 2:], GAMES_AND_COLLECTIBLES_CATEGORY)
 
 
