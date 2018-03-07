@@ -12,8 +12,11 @@ async def map_dapp(dapp_id, db, dapp=None):
         if not dapp:
             raise JSONHTTPError(400, body={'errors': [{'id': 'invalid_dapp_id', 'message': 'Invalid Dapp Id'}]})
 
-    categories = await db.fetch('SELECT category_id FROM dapp_categories WHERE dapp_id = $1', int(dapp_id))
-    categories = [category['category_id'] for category in categories]
+    if 'cats' in dapp:
+        categories = dapp['cats']
+    else:
+        categories = await db.fetch('SELECT category_id FROM dapp_categories WHERE dapp_id = $1', int(dapp_id))
+        categories = [category['category_id'] for category in categories]
 
     return {
         'dapp'  :   {
@@ -39,8 +42,12 @@ async def get_apps_by_category(category_id, db):
 
 async def get_apps_by_filter(db, category_id=None, query='', limit=MAX_DAPP_SEARCH_LIMIT, offset=0):
     dapps = []
-    query_str = ('SELECT dapp_id, name, url, description, icon, cover FROM dapps '
-                 'WHERE name ~~* $1 ORDER BY name OFFSET $2 LIMIT $3')
+    query_str = ("SELECT DA.dapp_id, DA.name, Da.url, DA.description, DA.icon, DA.cover, array_agg(CAT.category_id) AS cats "
+                     "FROM dapps AS DA LEFT JOIN dapp_categories AS CAT "
+                     "ON DA.dapp_id = CAT.dapp_id WHERE DA.name ~~* $1 "
+                     "GROUP BY DA.dapp_id "
+                     "ORDER BY DA.name OFFSET $2 LIMIT $3")
+
     query_count = ('SELECT count(dapp_id) FROM dapps WHERE name ~~* $1')
 
     query = '%' + query + '%'
@@ -48,14 +55,18 @@ async def get_apps_by_filter(db, category_id=None, query='', limit=MAX_DAPP_SEAR
     query_count_params = [query]
 
     if category_id:
-        query_str = ("SELECT DA.dapp_id, DA.name, Da.url, DA.description, DA.icon, DA.cover FROM dapps AS DA, dapp_categories AS CAT "
-                     "WHERE CAT.category_id = $1 AND DA.dapp_id = CAT.dapp_id AND DA.name ~~* $2 ORDER BY DA.name OFFSET $3 LIMIT $4")
+        query_str = ("SELECT DA.dapp_id, DA.name, Da.url, DA.description, DA.icon, DA.cover, array_agg(CAT.category_id) AS cats "
+                     "FROM dapps AS DA LEFT JOIN dapp_categories AS CAT "
+                     "ON DA.dapp_id = CAT.dapp_id WHERE DA.name ~~* $1 "
+                     "GROUP BY DA.dapp_id "
+                     "HAVING array_agg(CAT.category_id) @> ARRAY[CAST($2 AS INT)] "
+                     "ORDER BY DA.name OFFSET $3 LIMIT $4")
 
         query_count = ("SELECT count (DA.dapp_id) FROM dapps as DA, dapp_categories AS CAT "
                        "WHERE CAT.category_id = $1 AND DA.dapp_id = CAT.dapp_id AND DA.name ~~* $2")
-        query_count_params = [int(category_id), query]
+        query_count_params = [int(category_id), query ]
 
-        query_params = [int(category_id), query, offset, limit]
+        query_params = [ query, int(category_id), offset, limit]
 
     db_dapps = await db.fetch(query_str, *query_params)
     db_count = await db.fetch(query_count, *query_count_params)
