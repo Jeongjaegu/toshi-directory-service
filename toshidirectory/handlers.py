@@ -33,7 +33,7 @@ async def map_dapp(dapp_id, db, dapp=None):
 async def get_apps_by_category(category_id, db):
     dapps = []
     queried_dapps = await db.fetch('SELECT DA.dapp_id, DA.name, DA.url, DA.description, DA.icon, DA.cover FROM dapps as DA, dapp_categories as CAT ' 
-                                   'WHERE DA.dapp_id = CAT.dapp_id AND category_id = $1  ORDER BY DA.name LIMIT $2' , int(category_id), DAPPS_PER_CATEGORY)
+                                   'WHERE DA.dapp_id = CAT.dapp_id AND category_id = $1  ORDER BY DA.name LIMIT $2' , category_id, DAPPS_PER_CATEGORY)
     for dapp in queried_dapps:
         mapped_app = await map_dapp(dapp['dapp_id'], db, dapp)
         dapps.append(mapped_app['dapp'])
@@ -64,9 +64,9 @@ async def get_apps_by_filter(db, category_id=None, query='', limit=MAX_DAPP_SEAR
 
         query_count = ("SELECT count (DA.dapp_id) FROM dapps as DA, dapp_categories AS CAT "
                        "WHERE CAT.category_id = $1 AND DA.dapp_id = CAT.dapp_id AND DA.name ~~* $2")
-        query_count_params = [int(category_id), query ]
+        query_count_params = [category_id, query ]
 
-        query_params = [ query, int(category_id), offset, limit]
+        query_params = [ query, category_id, offset, limit]
 
     db_dapps = await db.fetch(query_str, *query_params)
     db_count = await db.fetch(query_count, *query_count_params)
@@ -123,14 +123,21 @@ class DappSearchHandler(DatabaseMixin, BaseHandler):
     async def get(self):
         async with self.db:
             try:
-                offset      = int(self.get_argument('offset', 0))
-                limit       = min(int(self.get_argument('limit', DEFAULT_DAPP_SEARCH_LIMIT)), MAX_DAPP_SEARCH_LIMIT)
+                offset = int(self.get_argument('offset', 0))
+            except ValueError:
+                raise JSONHTTPError(400, body={'errors': [{'id': 'invalid_offset', 'message': 'Invalid type for offset'}]})
+
+            try:
+                limit = min(int(self.get_argument('limit', DEFAULT_DAPP_SEARCH_LIMIT)), MAX_DAPP_SEARCH_LIMIT)
+            except ValueError:
+                raise JSONHTTPError(400, body={'errors': [{'id': 'invalid_limit', 'message': 'Invalid type for limit'}]})
+            
+            try:
                 category    = self.get_argument('category', None)
                 if category:
                     category = int(category)
-
             except ValueError:
-                raise JSONHTTPError(400, body={'errors': [{'id': 'invalid_limit_offset', 'message': 'Invalid type for limit or offset'}]})
+                raise JSONHTTPError(400, body={'errors': [{'id': 'invalid_category', 'message': 'Invalid type for category'}]})
 
             query = self.get_argument('query', '')
 
