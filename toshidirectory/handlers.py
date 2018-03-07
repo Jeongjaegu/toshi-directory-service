@@ -19,7 +19,7 @@ async def map_dapp(dapp_id, db, dapp=None):
         categories = [category['category_id'] for category in categories]
 
     return {
-        'dapp'  :   {
+        'dapp': {
             'dapp_id'       : int(dapp_id),
             'name'          : dapp['name'],
             'url'           : dapp['url'],
@@ -32,8 +32,11 @@ async def map_dapp(dapp_id, db, dapp=None):
 
 async def get_apps_by_category(category_id, db):
     dapps = []
-    queried_dapps = await db.fetch('SELECT DA.dapp_id, DA.name, DA.url, DA.description, DA.icon, DA.cover FROM dapps as DA, dapp_categories as CAT ' 
-                                   'WHERE DA.dapp_id = CAT.dapp_id AND category_id = $1  ORDER BY DA.name LIMIT $2' , category_id, DAPPS_PER_CATEGORY)
+    queried_dapps = await db.fetch(
+        "SELECT DA.dapp_id, DA.name, DA.url, DA.description, DA.icon, DA.cover "
+        "FROM dapps as DA, dapp_categories as CAT "
+        "WHERE DA.dapp_id = CAT.dapp_id AND category_id = $1 ORDER BY DA.name LIMIT $2",
+        category_id, DAPPS_PER_CATEGORY)
     for dapp in queried_dapps:
         mapped_app = await map_dapp(dapp['dapp_id'], db, dapp)
         dapps.append(mapped_app['dapp'])
@@ -43,7 +46,7 @@ async def get_apps_by_category(category_id, db):
 async def get_apps_by_filter(db, category_id=None, query='', limit=MAX_DAPP_SEARCH_LIMIT, offset=0):
     dapps = []
     query = '%' + query + '%'
-    
+
     if category_id:
         query_str = ("SELECT DA.dapp_id, DA.name, Da.url, DA.description, DA.icon, DA.cover, array_agg(CAT.category_id) AS cats "
                      "FROM dapps AS DA LEFT JOIN dapp_categories AS CAT "
@@ -54,21 +57,20 @@ async def get_apps_by_filter(db, category_id=None, query='', limit=MAX_DAPP_SEAR
 
         query_count = ("SELECT count (DA.dapp_id) FROM dapps as DA, dapp_categories AS CAT "
                        "WHERE CAT.category_id = $1 AND DA.dapp_id = CAT.dapp_id AND DA.name ~~* $2")
-        query_count_params = [category_id, query ]
+        query_count_params = [category_id, query]
 
-        query_params = [ query, category_id, offset, limit]
+        query_params = [query, category_id, offset, limit]
     else:
         query_str = ("SELECT DA.dapp_id, DA.name, Da.url, DA.description, DA.icon, DA.cover, array_agg(CAT.category_id) AS cats "
-                         "FROM dapps AS DA LEFT JOIN dapp_categories AS CAT "
-                         "ON DA.dapp_id = CAT.dapp_id WHERE DA.name ~~* $1 "
-                         "GROUP BY DA.dapp_id "
-                         "ORDER BY DA.name OFFSET $2 LIMIT $3")
+                     "FROM dapps AS DA LEFT JOIN dapp_categories AS CAT "
+                     "ON DA.dapp_id = CAT.dapp_id WHERE DA.name ~~* $1 "
+                     "GROUP BY DA.dapp_id "
+                     "ORDER BY DA.name OFFSET $2 LIMIT $3")
 
-        query_count = ('SELECT count(dapp_id) FROM dapps WHERE name ~~* $1')
+        query_count = ("SELECT count(dapp_id) FROM dapps WHERE name ~~* $1")
 
         query_params = [query, offset, limit]
         query_count_params = [query]
-    
 
     db_dapps = await db.fetch(query_str, *query_params)
     db_count = await db.fetch(query_count, *query_count_params)
@@ -133,9 +135,9 @@ class DappSearchHandler(DatabaseMixin, BaseHandler):
                 limit = min(int(self.get_argument('limit', DEFAULT_DAPP_SEARCH_LIMIT)), MAX_DAPP_SEARCH_LIMIT)
             except ValueError:
                 raise JSONHTTPError(400, body={'errors': [{'id': 'invalid_limit', 'message': 'Invalid type for limit'}]})
-            
+
             try:
-                category    = self.get_argument('category', None)
+                category = self.get_argument('category', None)
                 if category:
                     category = int(category)
             except ValueError:
@@ -170,9 +172,9 @@ class DappHandler(DatabaseMixin, BaseHandler):
 
     async def get(self, dapp_id):
         async with self.db:
-           mapping = await map_dapp(dapp_id, self.db)
+            mapping = await map_dapp(dapp_id, self.db)
 
-           self.write({
-               'dapp'          : mapping['dapp'],
-               'categories'    : mapping['dapp']['categories']
-           })
+            self.write({
+                'dapp'          : mapping['dapp'],
+                'categories'    : mapping['dapp']['categories']
+            })

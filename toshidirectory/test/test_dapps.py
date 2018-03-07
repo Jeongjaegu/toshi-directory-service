@@ -347,7 +347,7 @@ class DappSearchHandlerTest(DappsTestBase):
         await self.create_test_data()
 
         # make sure values that aren't numbers return an error
-        for query in ["offset=foo", "limit=bar", "offset=5&limit=foo", "limit=10&offset=bar", "limit=None", "offset=null"]:
+        for query in ["offset=foo", "limit=bar", "offset=5&limit=foo", "limit=10&offset=bar", "limit=None", "offset=null", "category=foo", "category=null"]:
             resp = await self.fetch("/dapps?{}".format(query))
             self.assertResponseCodeEqual(resp, 400)
 
