@@ -33,31 +33,31 @@ async def get_apps_by_category(category_id, db):
     for dapp in dapps_ids:
         mapped_app = await map_dapp(dapp['dapp_id'], db)
         dapps.append(mapped_app['dapp'])
-    dapps = sorted(dapps, key = lambda e : e['name'])[:DAPPS_PER_CATEGORY]
+    dapps = sorted(dapps, key=lambda e: e['name'])[:DAPPS_PER_CATEGORY]
     return dapps
 
 async def get_apps_by_filter(db, category_id=None, query='', limit=MAX_DAPP_SEARCH_LIMIT, offset=0):
     dapps = []
     query_str = ('SELECT dapp_id, name, url, description, icon, cover FROM dapps '
-                 'WHERE name ~~ $1 ORDER BY name OFFSET $2 LIMIT $3')
-    query_count = ('SELECT count(dapp_id) FROM dapps WHERE name ~~ $1')
- 
+                 'WHERE name ~~* $1 ORDER BY name OFFSET $2 LIMIT $3')
+    query_count = ('SELECT count(dapp_id) FROM dapps WHERE name ~~* $1')
+
     query = '%' + query + '%'
     query_params = [query, offset, limit]
     query_count_params = [query]
 
     if category_id:
         query_str = ("SELECT DA.dapp_id, DA.name, Da.url, DA.description, DA.icon, DA.cover FROM dapps AS DA, dapp_categories AS CAT "
-                     "WHERE CAT.category_id = $1 AND DA.dapp_id = CAT.dapp_id AND DA.name ~~ $2 ORDER BY DA.name OFFSET $3 LIMIT $4") 
+                     "WHERE CAT.category_id = $1 AND DA.dapp_id = CAT.dapp_id AND DA.name ~~* $2 ORDER BY DA.name OFFSET $3 LIMIT $4")
 
         query_count = ("SELECT count (DA.dapp_id) FROM dapps as DA, dapp_categories AS CAT "
-                       "WHERE CAT.category_id = $1 AND DA.dapp_id = CAT.dapp_id AND DA.name ~~ $2") 
+                       "WHERE CAT.category_id = $1 AND DA.dapp_id = CAT.dapp_id AND DA.name ~~* $2")
         query_count_params = [int(category_id), query]
-                                          
+
         query_params = [int(category_id), query, offset, limit]
 
-    db_dapps  = await db.fetch(query_str, *query_params)
-    db_count  = await db.fetch(query_count, *query_count_params) 
+    db_dapps = await db.fetch(query_str, *query_params)
+    db_count = await db.fetch(query_count, *query_count_params)
 
     for db_dapp in db_dapps:
         dapp_id = db_dapp['dapp_id']
@@ -70,10 +70,12 @@ def get_categories_in_dapps(dapps):
     categories = set()
     for app in dapps:
         categories = categories.union(app['categories'])
-        
+
     return list(categories)
 
-async def get_category_names(db, categories = []):
+async def get_category_names(db, categories=None):
+    if categories is None:
+        categories = []
     cats = await db.fetch('SELECT * from categories')
     cats = [cat for cat in cats if cat['category_id'] in categories]
     result = {}
@@ -85,7 +87,6 @@ async def get_category_names(db, categories = []):
 
 class FrontpageHandler(DatabaseMixin, BaseHandler):
 
-    
     async def get(self):
         async with self.db:
             categories = await self.db.fetch('SELECT * FROM categories')
@@ -120,8 +121,7 @@ class DappSearchHandler(DatabaseMixin, BaseHandler):
                 raise JSONHTTPError(400, body={'errors': [{'id': 'invalid_limit_offset', 'message': 'Invalid type for limit or offset'}]})
 
             query = self.get_argument('query', '')
-            
-            
+
             dapps, total = await get_apps_by_filter(self.db, category, query, limit, offset)
             categories = get_categories_in_dapps(dapps)
 
@@ -147,4 +147,3 @@ class DappHandler(DatabaseMixin, BaseHandler):
                'dapp'          : mapping['dapp'],
                'categories'    : mapping['dapp']['categories']
            })
-                
