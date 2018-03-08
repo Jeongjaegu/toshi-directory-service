@@ -507,4 +507,12 @@ class DappHandlerTest(DappsTestBase):
         self.assertEqual(len(body['categories']), len(expected_categories))
         for cat in dapp['categories']:
             self.assertIn(cat, expected_categories)
-            self.assertIn(cat, body['categories'])
+        for cat in expected_categories:
+            self.assertIn(str(cat), body['categories'])
+            self.assertEqual(body['categories'][str(cat)], TEST_CATEGORY_DATA_AS_MAP[cat])
+
+    @gen_test
+    @requires_database
+    async def test_dapp_404(self):
+        resp = await self.fetch("/dapp/123")
+        self.assertResponseCodeEqual(resp, 404)

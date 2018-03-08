@@ -1,3 +1,4 @@
+from tornado.escape import json_decode
 from toshi.database import DatabaseMixin
 from toshi.handlers import BaseHandler
 from toshi.errors import JSONHTTPError
@@ -6,40 +7,30 @@ DAPPS_PER_CATEGORY = 4
 DEFAULT_DAPP_SEARCH_LIMIT = 10
 MAX_DAPP_SEARCH_LIMIT = 100
 
-async def map_dapp(dapp_id, db, dapp=None):
-    if not dapp:
-        dapp = await db.fetchrow('SELECT * FROM dapps WHERE dapp_id = $1', int(dapp_id))
-        if not dapp:
-            raise JSONHTTPError(400, body={'errors': [{'id': 'invalid_dapp_id', 'message': 'Invalid Dapp Id'}]})
-
-    if 'cats' in dapp:
-        categories = dapp['cats']
-    else:
-        categories = await db.fetch('SELECT category_id FROM dapp_categories WHERE dapp_id = $1', int(dapp_id))
-        categories = [category['category_id'] for category in categories]
-
+def map_dapp_json(dapp):
     return {
-        'dapp': {
-            'dapp_id'       : int(dapp_id),
-            'name'          : dapp['name'],
-            'url'           : dapp['url'],
-            'description'   : dapp['description'],
-            'icon'          : dapp['icon'],
-            'cover'         : dapp['cover'],
-            'categories'    : categories
-        }
+        'dapp_id'       : dapp['dapp_id'],
+        'name'          : dapp['name'],
+        'url'           : dapp['url'],
+        'description'   : dapp['description'],
+        'icon'          : dapp['icon'],
+        'cover'         : dapp['cover'],
+        'categories'    : dapp['categories']
     }
 
 async def get_apps_by_category(category_id, db):
     dapps = []
     queried_dapps = await db.fetch(
-        "SELECT DA.dapp_id, DA.name, DA.url, DA.description, DA.icon, DA.cover "
-        "FROM dapps as DA, dapp_categories as CAT "
-        "WHERE DA.dapp_id = CAT.dapp_id AND category_id = $1 ORDER BY DA.name LIMIT $2",
+        "SELECT DA.dapp_id, DA.name, DA.url, DA.description, DA.icon, DA.cover, ARRAY_AGG(CAT.category_id) AS categories "
+        "FROM dapps DA "
+        "JOIN dapp_categories CAT ON DA.dapp_id = CAT.dapp_id "
+        "GROUP BY DA.dapp_id "
+        "HAVING $1 = ANY(ARRAY_AGG(CAT.category_id)) "
+        "ORDER BY DA.name LIMIT $2",
         category_id, DAPPS_PER_CATEGORY)
     for dapp in queried_dapps:
-        mapped_app = await map_dapp(dapp['dapp_id'], db, dapp)
-        dapps.append(mapped_app['dapp'])
+        mapped_dapp = map_dapp_json(dapp)
+        dapps.append(mapped_dapp)
 
     return dapps
 
@@ -48,11 +39,13 @@ async def get_apps_by_filter(db, category_id=None, query='', limit=MAX_DAPP_SEAR
     query = '%' + query + '%'
 
     if category_id:
-        query_str = ("SELECT DA.dapp_id, DA.name, Da.url, DA.description, DA.icon, DA.cover, array_agg(CAT.category_id) AS cats "
-                     "FROM dapps AS DA LEFT JOIN dapp_categories AS CAT "
-                     "ON DA.dapp_id = CAT.dapp_id WHERE DA.name ~~* $1 "
+        query_str = ("SELECT DA.dapp_id, DA.name, Da.url, DA.description, DA.icon, DA.cover, "
+                     "ARRAY_AGG(DACAT.category_id) AS categories "
+                     "FROM dapps AS DA "
+                     "JOIN dapp_categories AS DACAT ON DA.dapp_id = DACAT.dapp_id "
+                     "WHERE DA.name ~~* $1 "
                      "GROUP BY DA.dapp_id "
-                     "HAVING array_agg(CAT.category_id) @> ARRAY[CAST($2 AS INT)] "
+                     "HAVING $2 = ANY(ARRAY_AGG(DACAT.category_id)) "
                      "ORDER BY DA.name OFFSET $3 LIMIT $4")
 
         query_count = ("SELECT count (DA.dapp_id) FROM dapps as DA, dapp_categories AS CAT "
@@ -61,9 +54,11 @@ async def get_apps_by_filter(db, category_id=None, query='', limit=MAX_DAPP_SEAR
 
         query_params = [query, category_id, offset, limit]
     else:
-        query_str = ("SELECT DA.dapp_id, DA.name, Da.url, DA.description, DA.icon, DA.cover, array_agg(CAT.category_id) AS cats "
-                     "FROM dapps AS DA LEFT JOIN dapp_categories AS CAT "
-                     "ON DA.dapp_id = CAT.dapp_id WHERE DA.name ~~* $1 "
+        query_str = ("SELECT DA.dapp_id, DA.name, DA.url, DA.description, DA.icon, DA.cover, "
+                     "ARRAY_AGG(DACAT.category_id) AS categories "
+                     "FROM dapps AS DA "
+                     "JOIN dapp_categories AS DACAT ON DA.dapp_id = DACAT.dapp_id "
+                     "WHERE DA.name ~~* $1 "
                      "GROUP BY DA.dapp_id "
                      "ORDER BY DA.name OFFSET $2 LIMIT $3")
 
@@ -73,14 +68,12 @@ async def get_apps_by_filter(db, category_id=None, query='', limit=MAX_DAPP_SEAR
         query_count_params = [query]
 
     db_dapps = await db.fetch(query_str, *query_params)
-    db_count = await db.fetch(query_count, *query_count_params)
+    db_count = await db.fetchval(query_count, *query_count_params)
 
     for db_dapp in db_dapps:
-        dapp_id = db_dapp['dapp_id']
-        dapp = await map_dapp(dapp_id, db, db_dapp)
-        dapps.append(dapp['dapp'])
+        dapps.append(map_dapp_json(db_dapp))
 
-    return dapps, db_count[0]['count']
+    return dapps, db_count
 
 def get_categories_in_dapps(dapps):
     categories = set()
@@ -88,18 +81,6 @@ def get_categories_in_dapps(dapps):
         categories = categories.union(app['categories'])
 
     return list(categories)
-
-async def get_category_names(db, categories=None):
-    if categories is None:
-        categories = []
-    cats = await db.fetch('SELECT * from categories')
-    cats = [cat for cat in cats if cat['category_id'] in categories]
-    result = {}
-
-    for cat in cats:
-        result[cat['category_id']] = cat['name']
-
-    return result
 
 class FrontpageHandler(DatabaseMixin, BaseHandler):
 
@@ -171,10 +152,25 @@ class DappSearchHandler(DatabaseMixin, BaseHandler):
 class DappHandler(DatabaseMixin, BaseHandler):
 
     async def get(self, dapp_id):
+        try:
+            dapp_id = int(dapp_id)
+        except ValueError:
+            raise JSONHTTPError(400, body={'errors': [{'id': 'invalid_dapp_id', 'message': 'Invalid Dapp Id'}]})
         async with self.db:
-            mapping = await map_dapp(dapp_id, self.db)
+            dapp = await self.db.fetchrow(
+                "SELECT d.*, JSONB_OBJECT_AGG(cat.category_id, cat.name) AS category_map, ARRAY_AGG(cat.category_id) as categories "
+                "FROM dapps d "
+                "JOIN dapp_categories dc ON d.dapp_id = dc.dapp_id "
+                "JOIN categories cat ON dc.category_id = cat.category_id "
+                "WHERE d.dapp_id = $1 "
+                "GROUP BY d.dapp_id",
+                dapp_id)
+        if not dapp:
+            raise JSONHTTPError(404, body={'errors': [{'id': 'invalid_dapp_id', 'message': 'Invalid Dapp Id'}]})
 
-            self.write({
-                'dapp'          : mapping['dapp'],
-                'categories'    : mapping['dapp']['categories']
-            })
+        dapp_json = map_dapp_json(dapp)
+
+        self.write({
+            'dapp': dapp_json,
+            'categories': json_decode(dapp['category_map'])
+        })
