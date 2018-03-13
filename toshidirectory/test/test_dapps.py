@@ -352,6 +352,16 @@ class FrontpageHandlerTest(DappsTestBase):
             self.assertEqual(body['categories'][cat], TEST_CATEGORY_DATA_AS_MAP[int(cat)])
 
 
+    @gen_test
+    @requires_database
+    async def test_bad_sort_by_rank(self):
+
+        await self.create_test_data()
+
+        # make sure values that aren't numbers return an error
+        for query in ["byrank=True", "byrank=TrUe", "byrank=Rndom"]:
+            resp = await self.fetch("/dapps/frontpage?{}".format(query))
+            self.assertResponseCodeEqual(resp, 400)
 
 
 class DappSearchHandlerTest(DappsTestBase):
