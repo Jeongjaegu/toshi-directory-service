@@ -228,12 +228,12 @@ TEST_CATEGORY_DATA_AS_MAP = {
 if sys.platform == 'linux':
     ALL_DAPPS_SORTED = sorted(TEST_DAPP_DATA, key=lambda e: e[1].replace(' ', '').lower())
     GAMES_AND_COLLECTIBLES_SORTED = [y for y in sorted(TEST_DAPP_DATA, key=lambda e: e[1].replace(' ', '').lower()) if y[0] in [x[0] for x in TEST_DAPP_CATEGORY_DATA if x[1] == 1]]
-    GAMES_AND_COLLECTIBLES_SORTED_BY_RANK = [y for y in sorted(TEST_DAPP_DATA, key=lambda e: (e[7], e[1].replace(' ', '').lower())) if y[0] in [x[0] for x in TEST_DAPP_CATEGORY_DATA if x[1] == 1]]
+    GAMES_AND_COLLECTIBLES_SORTED_BY_RANK = [y for y in sorted(TEST_DAPP_DATA, key=lambda e: (-e[7], e[1].replace(' ', '').lower())) if y[0] in [x[0] for x in TEST_DAPP_CATEGORY_DATA if x[1] == 1]]
 
 elif sys.platform == 'darwin':
     ALL_DAPPS_SORTED = sorted(TEST_DAPP_DATA, key=lambda e: e[1])
-    GAMES_AND_COLLECTIBLES_SORTED = [y for y in sorted(TEST_DAPP_DATA, key=lambda e: e[1]) if y[0] in [x[0] for x in TEST_DAPP_CATEGORY_DATA if x[1] == 1]]
-    GAMES_AND_COLLECTIBLES_SORTED_BY_RANK = [y for y in sorted(TEST_DAPP_DATA, key=lambda e: (e[7], e[1])) if y[0] in [x[0] for x in TEST_DAPP_CATEGORY_DATA if x[1] == 1]]
+    GAMES_AND_COLLECTIBLES_SORTED = [y for y in sorted(TEST_DAPP_DATA, key=lambda e:  e[1]) if y[0] in [x[0] for x in TEST_DAPP_CATEGORY_DATA if x[1] == 1]]
+    GAMES_AND_COLLECTIBLES_SORTED_BY_RANK = [y for y in sorted(TEST_DAPP_DATA, key=lambda e: (-e[7], e[1])) if y[0] in [x[0] for x in TEST_DAPP_CATEGORY_DATA if x[1] == 1]]
 else:
     print("Unsupported system.platform '{}'".format(sys.platform))
     sys.exit(1)
@@ -295,47 +295,6 @@ class FrontpageHandlerTest(DappsTestBase):
         self.assertIn("dapps", body['sections'][0])
         self.assertEqual(len(body['sections'][0]['dapps']), DAPPS_PER_CATEGORY)
 
-        for result, expected in zip(body['sections'][0]['dapps'], GAMES_AND_COLLECTIBLES_SORTED[:DAPPS_PER_CATEGORY]):
-            self.assertEqual(len(result), 7)
-            self.assertEqual(result['dapp_id'], expected[0])
-            self.assertEqual(result['name'], expected[1])
-            self.assertEqual(result['url'], expected[2])
-            self.assertEqual(result['description'], expected[3])
-            self.assertEqual(result['icon'], expected[4])
-            self.assertEqual(result['cover'], expected[4])
-            expected_categories = [x[1] for x in TEST_DAPP_CATEGORY_DATA if x[0] == result['dapp_id']]
-            self.assertEqual(len(result['categories']), len(expected_categories))
-            for cat in result['categories']:
-                self.assertIn(cat, expected_categories)
-        for cat in body['categories']:
-            self.assertEqual(body['categories'][cat], TEST_CATEGORY_DATA_AS_MAP[int(cat)])
-
-    @gen_test
-    @requires_database
-    async def test_frontpage_by_rank(self):
-
-        await self.create_test_data()
-
-        resp = await self.fetch("/dapps/frontpage?byrank=true")
-        self.assertResponseCodeEqual(resp, 200)
-        body = json_decode(resp.body)
-
-        self.assertIn("sections", body)
-        self.assertIn("categories", body)
-
-        # make sure all the categories are listed
-        self.assertEqual(len(body['categories']), len(TEST_CATEGORY_DATA))
-        # make sure there is a section per category
-        self.assertEqual(len(body['sections']), len(TEST_CATEGORY_DATA))
-
-        # make sure the sections are listed in order of category_id
-        for section, category in zip(body['sections'], TEST_CATEGORY_DATA):
-            self.assertEqual(section['category_id'], category[0])
-
-        self.assertEqual(body['sections'][0]['category_id'], 1)
-        self.assertIn("dapps", body['sections'][0])
-        self.assertEqual(len(body['sections'][0]['dapps']), DAPPS_PER_CATEGORY)
-
         for result, expected in zip(body['sections'][0]['dapps'], GAMES_AND_COLLECTIBLES_SORTED_BY_RANK[:DAPPS_PER_CATEGORY]):
             self.assertEqual(len(result), 7)
             self.assertEqual(result['dapp_id'], expected[0])
@@ -350,19 +309,6 @@ class FrontpageHandlerTest(DappsTestBase):
                 self.assertIn(cat, expected_categories)
         for cat in body['categories']:
             self.assertEqual(body['categories'][cat], TEST_CATEGORY_DATA_AS_MAP[int(cat)])
-
-
-    @gen_test
-    @requires_database
-    async def test_bad_sort_by_rank(self):
-
-        await self.create_test_data()
-
-        # make sure values that aren't numbers return an error
-        for query in ["byrank=True", "byrank=TrUe", "byrank=Rndom"]:
-            resp = await self.fetch("/dapps/frontpage?{}".format(query))
-            self.assertResponseCodeEqual(resp, 400)
-
 
 class DappSearchHandlerTest(DappsTestBase):
 

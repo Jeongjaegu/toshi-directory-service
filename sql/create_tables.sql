@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS dapps (
     icon VARCHAR,
     cover VARCHAR,
     created TIMESTAMP WITHOUT TIME ZONE DEFAULT (now() AT TIME ZONE 'utc'),
-    updated TIMESTAMP WITHOUT TIME ZONE DEFAULT (now() AT TIME ZONE 'utc')
+    updated TIMESTAMP WITHOUT TIME ZONE DEFAULT (now() AT TIME ZONE 'utc'),
+    dapp_rank INTEGER DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS categories (
@@ -21,5 +22,3 @@ CREATE TABLE IF NOT EXISTS dapp_categories (
 );
 
 UPDATE database_version SET version_number = 1;
-
-ALTER TABLE dapps ADD COLUMN dapp_rank INTEGER DEFAULT 1000000;
