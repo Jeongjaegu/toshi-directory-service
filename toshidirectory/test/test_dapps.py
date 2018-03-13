@@ -17,147 +17,168 @@ TEST_DAPP_DATA = [
      'Give wisdom, get money. Ask a question and offer a bounty for the best answers. The userbase then votes to determine which answers receive that bounty.',
      'https://www.toshi.org/0x000000000000000000000000173890ea93800402_613d88.png',
      datetime.datetime(2017, 12, 19, 12, 29, 20, 552493),
-     datetime.datetime(2017, 12, 19, 12, 29, 20, 552493)),
+     datetime.datetime(2017, 12, 19, 12, 29, 20, 552493),
+     1),
     (1673246774900294659,
      'NameBazaar',
      'https://namebazaar.io/',
      'A peer-to-peer marketplace for the exchange of names registered via the Ethereum Name Service.',
      'https://www.toshi.org/0x0000000000000000000000001738911397800403_a64bad.png',
      datetime.datetime(2017, 12, 19, 12, 29, 41, 692435),
-     datetime.datetime(2017, 12, 19, 12, 29, 41, 692435)),
+     datetime.datetime(2017, 12, 19, 12, 29, 41, 692435),
+     2),
     (1673246900729414660,
      'Cryptokitties',
      'https://www.cryptokitties.co/',
      'CryptoKitties is a game centered around breedable, collectible, and oh-so-adorable creatures we call CryptoKitties! Each cat is one-of-a-kind and 100% owned by you; it cannot be replicated, taken away, or destroyed.',
      'https://www.toshi.org/0x00000000000000000000000017389130e3800404_3ac912.png',
      datetime.datetime(2017, 12, 19, 12, 29, 56, 273100),
-     datetime.datetime(2017, 12, 19, 12, 29, 56, 273100)),
+     datetime.datetime(2017, 12, 19, 12, 29, 56, 273100),
+     3),
     (1674816702887494661,
      'Ethlance',
      'https://ethlance.com/',
      'The future of work is now! Hire or work for Ether cryptocurrency',
      'https://www.toshi.org/0x000000000000000000000000173e24eaef800405_f1b0b7.png',
      datetime.datetime(2017, 12, 21, 16, 28, 51, 564216),
-     datetime.datetime(2017, 12, 21, 16, 28, 51, 564216)),
+     datetime.datetime(2017, 12, 21, 16, 28, 51, 564216),
+     1),
     (1674820117050950662,
      'Leeroy',
      'https://leeroy.io/',
      'Leeroy is a decentralised social network built on Ethereum.',
      'https://www.toshi.org/0x000000000000000000000000173e2805db800406_7ad6b4.png',
      datetime.datetime(2017, 12, 21, 16, 35, 38, 270798),
-     datetime.datetime(2017, 12, 21, 16, 35, 38, 270798)),
+     datetime.datetime(2017, 12, 21, 16, 35, 38, 270798),
+     2),
     (1674821140461126663,
      'CryptoPunks',
      'https://www.larvalabs.com/cryptopunks',
      '10,000 unique collectible characters with proof of ownership stored on the Ethereum blockchain.',
      'https://www.toshi.org/0x000000000000000000000000173e28f423800407_c9007c.jpg',
      datetime.datetime(2017, 12, 21, 16, 37, 40, 235798),
-     datetime.datetime(2017, 12, 21, 16, 37, 40, 235798)),
+     datetime.datetime(2017, 12, 21, 16, 37, 40, 235798),
+     3),
     (1695885715289670663,
      'Crypto High Score',
      'https://www.cryptohighscore.co',
      'The first high score leaderboard on the blockchain. Pay your way to the top of the immutable, irrefutable global rankings.',
      'https://www.toshi.org/0x0000000000000000000000001788ff12a7800407_ca5ba0.png',
      datetime.datetime(2018, 1, 19, 18, 9, 13, 815644),
-     datetime.datetime(2018, 1, 19, 18, 9, 13, 815644)),
+     datetime.datetime(2018, 1, 19, 18, 9, 13, 815644),
+     1),
     (1699282069730886664,
      'ERC dEX',
      'https://app.ercdex.com/',
      'Trustless\xa0trading has arrived on Ethereum. No need to deposit your tokens or create an account - trade ERC20 tokens directly from your wallet.',
      'https://www.toshi.org/0x0000000000000000000000001795100a0b800408_543c99.png',
      datetime.datetime(2018, 1, 24, 10, 37, 10, 994011),
-     datetime.datetime(2018, 1, 24, 10, 37, 10, 994011)),
+     datetime.datetime(2018, 1, 24, 10, 37, 10, 994011),
+     2),
     (1704426417141318665,
      'ChainMonsters',
      'https://chainmonsters.io/',
      'ChainMonsters is a 100% blockchain based monster collectible game. Every action you take, every ChainMonster you catch will be reflected in the game and on blockchain itself.',
      'https://www.toshi.org/0x00000000000000000000000017a756cbc3800409_393169.png',
      datetime.datetime(2018, 1, 31, 12, 58, 4, 697837),
-     datetime.datetime(2018, 1, 31, 12, 58, 4, 697837)),
+     datetime.datetime(2018, 1, 31, 12, 58, 4, 697837),
+     2),
     (1708300997736006666,
      'Etheremon',
      'https://www.etheremon.com/',
      'A decentralized application built on the Ethereum network to simulate a world of monsters where you can capture, evolve a monster to defeat others.',
      'https://www.toshi.org/0x00000000000000000000000017b51ab4db80040a_00dfcb.png',
      datetime.datetime(2018, 2, 5, 21, 16, 10, 638845),
-     datetime.datetime(2018, 2, 5, 21, 16, 10, 638845)),
+     datetime.datetime(2018, 2, 5, 21, 16, 10, 638845),
+     3),
     (1708333788804678667,
      'Ethercraft',
      'https://ethercraft.io/',
      'A decentralized RPG running on the Ethereum blockchain.',
      'https://www.toshi.org/0x00000000000000000000000017b538879f80040b_944085.png',
      datetime.datetime(2018, 2, 5, 22, 21, 19, 564400),
-     datetime.datetime(2018, 2, 5, 22, 21, 19, 564400)),
+     datetime.datetime(2018, 2, 5, 22, 21, 19, 564400),
+     4),
     (1708349878154822668,
      'Etherbots',
      'https://etherbots.io/',
      'A decentralized Robot Wars game for the Ethereum blockchain.',
      'https://www.toshi.org/0x00000000000000000000000017b54729b780040c_ecda6e.jpg',
      datetime.datetime(2018, 2, 5, 22, 53, 18, 15577),
-     datetime.datetime(2018, 2, 5, 22, 53, 18, 15577)),
+     datetime.datetime(2018, 2, 5, 22, 53, 18, 15577),
+     4),
     (1708351748814406669,
      'Hong Bao',
      'https://givehongbao.com/',
      'Crowdfunded campaigns powered by the Ethereum Network. Hong Bao lets you raise money for any cause, anywhere in the world.',
      'https://www.toshi.org/0x00000000000000000000000017b548dd4380040d_c823c8.jpg',
      datetime.datetime(2018, 2, 5, 22, 57, 0, 946397),
-     datetime.datetime(2018, 2, 5, 22, 57, 0, 946397)),
+     datetime.datetime(2018, 2, 5, 22, 57, 0, 946397),
+     5),
     (1708352654784070670,
      'World of Ether',
      'https://worldofether.com/',
      'Fully decentralized collectable duelling game on the Ethereum blockchain. Collect, breed, battle.',
      'https://www.toshi.org/0x00000000000000000000000017b549b03380040e_b6b3c8.jpg',
      datetime.datetime(2018, 2, 5, 22, 58, 48, 948025),
-     datetime.datetime(2018, 2, 5, 22, 58, 48, 948025)),
+     datetime.datetime(2018, 2, 5, 22, 58, 48, 948025),
+     6),
     (1710548330985030671,
      'CryptoFighters',
      'https://cryptofighters.io/',
      'CryptoFighters is a game centred around cryptographically unique collectible fighters on the Ethereum blockchain. Collect, battle and level up your fighters to win new fighters!',
      'https://www.toshi.org/0x00000000000000000000000017bd16a4e780040f_0bb1e3.png',
      datetime.datetime(2018, 2, 8, 23, 41, 13, 585866),
-     datetime.datetime(2018, 2, 8, 23, 41, 13, 585866)),
+     datetime.datetime(2018, 2, 8, 23, 41, 13, 585866),
+     7),
     (1710550109369926672,
      'Crypto Celebrities',
      'https://www.cryptocelebrities.co/',
      'Collect one-of-a-kind celebrity smart contracts',
      'https://www.toshi.org/0x00000000000000000000000017bd1842f7800410_73effb.png',
      datetime.datetime(2018, 2, 8, 23, 44, 45, 829020),
-     datetime.datetime(2018, 2, 8, 23, 44, 45, 829020)),
+     datetime.datetime(2018, 2, 8, 23, 44, 45, 829020),
+     8),
     (1710555771680326675,
      'Ether Numbers',
      'https://ethernumbers.co/',
      'EtherNumbers is a marketplace for collectible, tokenized representations of your favorite numbers. Each EtherNumber is like a baseball card, except there can only ever be one!',
      'https://www.toshi.org/0x00000000000000000000000017bd1d6953800413_e028d0.jpg',
      datetime.datetime(2018, 2, 8, 23, 56, 0, 959724),
-     datetime.datetime(2018, 2, 8, 23, 56, 0, 959724)),
+     datetime.datetime(2018, 2, 8, 23, 56, 0, 959724),
+     1),
     (1710556308551238676,
      'OpenSea',
      'https://opensea.io/',
      'Peer-to-peer marketplace for rare digital items.',
      'https://www.toshi.org/0x00000000000000000000000017bd1de653800414_308bf8.png',
      datetime.datetime(2018, 2, 8, 23, 57, 4, 888989),
-     datetime.datetime(2018, 2, 8, 23, 57, 4, 888989)),
+     datetime.datetime(2018, 2, 8, 23, 57, 4, 888989),
+     2),
     (1713827119085126677,
      'Rare Bits',
      'https://rarebits.io/',
      'A zero fee marketplace for crypto assets.',
      'https://www.toshi.org/0x00000000000000000000000017c8bcaf3f800415_2ff16a.png',
      datetime.datetime(2018, 2, 13, 12, 15, 35, 882713),
-     datetime.datetime(2018, 2, 13, 12, 15, 35, 882713)),
+     datetime.datetime(2018, 2, 13, 12, 15, 35, 882713),
+     3),
     (1715336347104838676,
      'Crypto Speech',
      'http://cryptospeech.com/',
      'Decentralized, Twitter-style messages stored for eternity',
      'https://www.toshi.org/0x00000000000000000000000017ce1951c7800414_2649b0.png',
      datetime.datetime(2018, 2, 15, 14, 14, 9, 986518),
-     datetime.datetime(2018, 2, 15, 14, 14, 9, 986518)),
+     datetime.datetime(2018, 2, 15, 14, 14, 9, 986518),
+     4),
     (1721937401460294677,
      'Kpopio',
      'https://www.kpop.io/',
      'Kpopio is an online game where you can buy and sell Kpop celebrity cards with other players.',
      'https://www.toshi.org/0x00000000000000000000000017e58cf183800415_3ba268.png',
      datetime.datetime(2018, 2, 24, 16, 49, 16, 855046),
-     datetime.datetime(2018, 2, 24, 16, 49, 16, 855046))
+     datetime.datetime(2018, 2, 24, 16, 49, 16, 855046),
+     5)
 ]
 
 TEST_CATEGORY_DATA = [
@@ -207,9 +228,12 @@ TEST_CATEGORY_DATA_AS_MAP = {
 if sys.platform == 'linux':
     ALL_DAPPS_SORTED = sorted(TEST_DAPP_DATA, key=lambda e: e[1].replace(' ', '').lower())
     GAMES_AND_COLLECTIBLES_SORTED = [y for y in sorted(TEST_DAPP_DATA, key=lambda e: e[1].replace(' ', '').lower()) if y[0] in [x[0] for x in TEST_DAPP_CATEGORY_DATA if x[1] == 1]]
+    GAMES_AND_COLLECTIBLES_SORTED_BY_RANK = [y for y in sorted(TEST_DAPP_DATA, key=lambda e: (e[7], e[1].replace(' ', '').lower())) if y[0] in [x[0] for x in TEST_DAPP_CATEGORY_DATA if x[1] == 1]]
+
 elif sys.platform == 'darwin':
     ALL_DAPPS_SORTED = sorted(TEST_DAPP_DATA, key=lambda e: e[1])
     GAMES_AND_COLLECTIBLES_SORTED = [y for y in sorted(TEST_DAPP_DATA, key=lambda e: e[1]) if y[0] in [x[0] for x in TEST_DAPP_CATEGORY_DATA if x[1] == 1]]
+    GAMES_AND_COLLECTIBLES_SORTED_BY_RANK = [y for y in sorted(TEST_DAPP_DATA, key=lambda e: (e[7], e[1])) if y[0] in [x[0] for x in TEST_DAPP_CATEGORY_DATA if x[1] == 1]]
 else:
     print("Unsupported system.platform '{}'".format(sys.platform))
     sys.exit(1)
@@ -231,8 +255,8 @@ class DappsTestBase(AsyncHandlerTest):
     async def create_test_data(self):
         async with self.pool.acquire() as con:
             await con.executemany(
-                "INSERT INTO dapps (dapp_id, name, url, description, icon, cover, created, updated) "
-                "VALUES ($1, $2, $3, $4, $5, $5, $6, $7)",
+                "INSERT INTO dapps (dapp_id, name, url, description, icon, cover, created, updated, dapp_rank) "
+                "VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8)",
                 TEST_DAPP_DATA)
             await con.executemany(
                 "INSERT INTO categories (category_id, name) "
@@ -285,6 +309,49 @@ class FrontpageHandlerTest(DappsTestBase):
                 self.assertIn(cat, expected_categories)
         for cat in body['categories']:
             self.assertEqual(body['categories'][cat], TEST_CATEGORY_DATA_AS_MAP[int(cat)])
+
+    @gen_test
+    @requires_database
+    async def test_frontpage_by_rank(self):
+
+        await self.create_test_data()
+
+        resp = await self.fetch("/dapps/frontpage?byrank=true")
+        self.assertResponseCodeEqual(resp, 200)
+        body = json_decode(resp.body)
+
+        self.assertIn("sections", body)
+        self.assertIn("categories", body)
+
+        # make sure all the categories are listed
+        self.assertEqual(len(body['categories']), len(TEST_CATEGORY_DATA))
+        # make sure there is a section per category
+        self.assertEqual(len(body['sections']), len(TEST_CATEGORY_DATA))
+
+        # make sure the sections are listed in order of category_id
+        for section, category in zip(body['sections'], TEST_CATEGORY_DATA):
+            self.assertEqual(section['category_id'], category[0])
+
+        self.assertEqual(body['sections'][0]['category_id'], 1)
+        self.assertIn("dapps", body['sections'][0])
+        self.assertEqual(len(body['sections'][0]['dapps']), DAPPS_PER_CATEGORY)
+
+        for result, expected in zip(body['sections'][0]['dapps'], GAMES_AND_COLLECTIBLES_SORTED_BY_RANK[:DAPPS_PER_CATEGORY]):
+            self.assertEqual(len(result), 7)
+            self.assertEqual(result['dapp_id'], expected[0])
+            self.assertEqual(result['name'], expected[1])
+            self.assertEqual(result['url'], expected[2])
+            self.assertEqual(result['description'], expected[3])
+            self.assertEqual(result['icon'], expected[4])
+            self.assertEqual(result['cover'], expected[4])
+            expected_categories = [x[1] for x in TEST_DAPP_CATEGORY_DATA if x[0] == result['dapp_id']]
+            self.assertEqual(len(result['categories']), len(expected_categories))
+            for cat in result['categories']:
+                self.assertIn(cat, expected_categories)
+        for cat in body['categories']:
+            self.assertEqual(body['categories'][cat], TEST_CATEGORY_DATA_AS_MAP[int(cat)])
+
+
 
 
 class DappSearchHandlerTest(DappsTestBase):
