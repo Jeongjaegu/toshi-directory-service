@@ -255,7 +255,7 @@ class DappsTestBase(AsyncHandlerTest):
     async def create_test_data(self):
         async with self.pool.acquire() as con:
             await con.executemany(
-                "INSERT INTO dapps (dapp_id, name, url, description, icon, cover, created, updated, dapp_rank) "
+                "INSERT INTO dapps (dapp_id, name, url, description, icon, cover, created, updated, rank) "
                 "VALUES ($1, $2, $3, $4, $5, $5, $6, $7, $8)",
                 TEST_DAPP_DATA)
             await con.executemany(

@@ -20,12 +20,12 @@ def map_dapp_json(dapp):
 
 async def get_apps_by_category(category_id, db):
     dapps = []
-    query_str = ("SELECT DA.dapp_id, DA.name, DA.url, DA.description, DA.icon, DA.cover, DA.dapp_rank, ARRAY_AGG(CAT.category_id) AS categories "
+    query_str = ("SELECT DA.dapp_id, DA.name, DA.url, DA.description, DA.icon, DA.cover, DA.rank, ARRAY_AGG(CAT.category_id) AS categories "
                 "FROM dapps DA "
                 "JOIN dapp_categories CAT ON DA.dapp_id = CAT.dapp_id "
                 "GROUP BY DA.dapp_id "
                 "HAVING $1 = ANY(ARRAY_AGG(CAT.category_id)) "
-                "ORDER BY DA.dapp_rank DESC, DA.name ASC LIMIT $2" )
+                "ORDER BY DA.rank DESC, DA.name ASC LIMIT $2" )
 
     queried_dapps = await db.fetch(query_str, category_id, DAPPS_PER_CATEGORY)
     for dapp in queried_dapps:
@@ -39,7 +39,7 @@ async def get_apps_by_filter(db, category_id=None, query='', limit=MAX_DAPP_SEAR
     query = '%' + query + '%'
 
     if category_id:
-        query_str = ("SELECT DA.dapp_id, DA.name, Da.url, DA.description, DA.icon, DA.cover, DA.dapp_rank, "
+        query_str = ("SELECT DA.dapp_id, DA.name, Da.url, DA.description, DA.icon, DA.cover, DA.rank, "
                      "ARRAY_AGG(DACAT.category_id) AS categories "
                      "FROM dapps AS DA "
                      "JOIN dapp_categories AS DACAT ON DA.dapp_id = DACAT.dapp_id "
@@ -54,7 +54,7 @@ async def get_apps_by_filter(db, category_id=None, query='', limit=MAX_DAPP_SEAR
 
         query_params = [query, category_id, offset, limit]
     else:
-        query_str = ("SELECT DA.dapp_id, DA.name, DA.url, DA.description, DA.icon, DA.cover, DA.dapp_rank, "
+        query_str = ("SELECT DA.dapp_id, DA.name, DA.url, DA.description, DA.icon, DA.cover, DA.rank, "
                      "ARRAY_AGG(DACAT.category_id) AS categories "
                      "FROM dapps AS DA "
                      "JOIN dapp_categories AS DACAT ON DA.dapp_id = DACAT.dapp_id "
@@ -85,7 +85,7 @@ class FrontpageHandler(DatabaseMixin, BaseHandler):
 
     async def get(self):
         async with self.db:
-            
+
             categories = await self.db.fetch('SELECT * FROM categories')
             categories_map = {}
             sections = []
