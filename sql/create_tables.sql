@@ -20,4 +20,6 @@ CREATE TABLE IF NOT EXISTS dapp_categories (
     PRIMARY KEY (category_id, dapp_id)
 );
 
-UPDATE database_version SET version_number = 0;
+UPDATE database_version SET version_number = 1;
+
+ALTER TABLE dapps ADD COLUMN dapp_rank INTEGER DEFAULT 1000000;

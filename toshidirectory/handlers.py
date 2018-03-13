@@ -18,16 +18,20 @@ def map_dapp_json(dapp):
         'categories'    : dapp['categories']
     }
 
-async def get_apps_by_category(category_id, db):
+async def get_apps_by_category(category_id, db, rank_sorted):
     dapps = []
-    queried_dapps = await db.fetch(
-        "SELECT DA.dapp_id, DA.name, DA.url, DA.description, DA.icon, DA.cover, ARRAY_AGG(CAT.category_id) AS categories "
-        "FROM dapps DA "
-        "JOIN dapp_categories CAT ON DA.dapp_id = CAT.dapp_id "
-        "GROUP BY DA.dapp_id "
-        "HAVING $1 = ANY(ARRAY_AGG(CAT.category_id)) "
-        "ORDER BY DA.name LIMIT $2",
-        category_id, DAPPS_PER_CATEGORY)
+    query_str = ("SELECT DA.dapp_id, DA.name, DA.url, DA.description, DA.icon, DA.cover, DA.dapp_rank, ARRAY_AGG(CAT.category_id) AS categories "
+                "FROM dapps DA "
+                "JOIN dapp_categories CAT ON DA.dapp_id = CAT.dapp_id "
+                "GROUP BY DA.dapp_id "
+                "HAVING $1 = ANY(ARRAY_AGG(CAT.category_id)) ")
+
+    if rank_sorted:
+        query_str += "ORDER BY DA.dapp_rank, DA.name LIMIT $2" 
+    else:
+        query_str += "ORDER BY DA.name LIMIT $2"
+
+    queried_dapps = await db.fetch(query_str, category_id, DAPPS_PER_CATEGORY)
     for dapp in queried_dapps:
         mapped_dapp = map_dapp_json(dapp)
         dapps.append(mapped_dapp)
@@ -39,7 +43,7 @@ async def get_apps_by_filter(db, category_id=None, query='', limit=MAX_DAPP_SEAR
     query = '%' + query + '%'
 
     if category_id:
-        query_str = ("SELECT DA.dapp_id, DA.name, Da.url, DA.description, DA.icon, DA.cover, "
+        query_str = ("SELECT DA.dapp_id, DA.name, Da.url, DA.description, DA.icon, DA.cover, DA.dapp_rank, "
                      "ARRAY_AGG(DACAT.category_id) AS categories "
                      "FROM dapps AS DA "
                      "JOIN dapp_categories AS DACAT ON DA.dapp_id = DACAT.dapp_id "
@@ -54,7 +58,7 @@ async def get_apps_by_filter(db, category_id=None, query='', limit=MAX_DAPP_SEAR
 
         query_params = [query, category_id, offset, limit]
     else:
-        query_str = ("SELECT DA.dapp_id, DA.name, DA.url, DA.description, DA.icon, DA.cover, "
+        query_str = ("SELECT DA.dapp_id, DA.name, DA.url, DA.description, DA.icon, DA.cover, DA.dapp_rank, "
                      "ARRAY_AGG(DACAT.category_id) AS categories "
                      "FROM dapps AS DA "
                      "JOIN dapp_categories AS DACAT ON DA.dapp_id = DACAT.dapp_id "
@@ -69,7 +73,6 @@ async def get_apps_by_filter(db, category_id=None, query='', limit=MAX_DAPP_SEAR
 
     db_dapps = await db.fetch(query_str, *query_params)
     db_count = await db.fetchval(query_count, *query_count_params)
-
     for db_dapp in db_dapps:
         dapps.append(map_dapp_json(db_dapp))
 
@@ -86,13 +89,19 @@ class FrontpageHandler(DatabaseMixin, BaseHandler):
 
     async def get(self):
         async with self.db:
+            
+            rank_sorted = self.get_argument('byrank', 'false')
+            if rank_sorted not in ['true', 'false']:
+                 raise JSONHTTPError(400, body={'errors': [{'id': 'invalid_byrank', 'message': 'Invalid type for byrank'}]})
+
+            rank_sorted = rank_sorted == 'true'
             categories = await self.db.fetch('SELECT * FROM categories')
             categories_map = {}
             sections = []
             for category in categories:
                 category_id = category['category_id']
                 categories_map[category_id] = category['name']
-                dapps = await get_apps_by_category(category_id, self.db)
+                dapps = await get_apps_by_category(category_id, self.db, rank_sorted)
                 sections.append({
                      'category_id' : category_id,
                      'dapps'       : dapps
