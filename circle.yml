@@ -34,4 +34,4 @@ deployment:
     branch: production
     commands:
       - git push -f git@heroku.com:token-dir-service.git $CIRCLE_SHA1:master
-      - git push -f git@heroku.com:toshi-dir-service.git $CIRCLE_SHA1:master
+      - git push -f git@heroku.com:toshi-directory-service.git $CIRCLE_SHA1:master
