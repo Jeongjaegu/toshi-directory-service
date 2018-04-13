@@ -2,6 +2,7 @@ from tornado.escape import json_decode
 from toshi.database import DatabaseMixin
 from toshi.handlers import BaseHandler
 from toshi.errors import JSONHTTPError
+from toshi.log import log
 
 DAPPS_PER_CATEGORY = 4
 DEFAULT_DAPP_SEARCH_LIMIT = 10
@@ -18,14 +19,16 @@ def map_dapp_json(dapp):
         'categories'    : dapp['categories']
     }
 
-async def get_apps_by_category(category_id, db):
+async def get_apps_by_category(category_id, db, filter_special=False):
     dapps = []
     query_str = ("SELECT DA.dapp_id, DA.name, DA.url, DA.description, DA.icon, DA.cover, DA.rank, ARRAY_AGG(CAT.category_id) AS categories "
-                "FROM dapps DA "
-                "JOIN dapp_categories CAT ON DA.dapp_id = CAT.dapp_id "
-                "GROUP BY DA.dapp_id "
-                "HAVING $1 = ANY(ARRAY_AGG(CAT.category_id)) "
-                "ORDER BY DA.rank DESC, DA.name ASC LIMIT $2" )
+                 "FROM dapps DA "
+                 "JOIN dapp_categories CAT ON DA.dapp_id = CAT.dapp_id ")
+    if filter_special:
+        query_str += "WHERE special = FALSE "
+    query_str += ("GROUP BY DA.dapp_id "
+                  "HAVING $1 = ANY(ARRAY_AGG(CAT.category_id)) "
+                  "ORDER BY DA.rank DESC, DA.name ASC LIMIT $2")
 
     queried_dapps = await db.fetch(query_str, category_id, DAPPS_PER_CATEGORY)
     for dapp in queried_dapps:
@@ -34,7 +37,7 @@ async def get_apps_by_category(category_id, db):
 
     return dapps
 
-async def get_apps_by_filter(db, category_id=None, query='', limit=MAX_DAPP_SEARCH_LIMIT, offset=0):
+async def get_apps_by_filter(db, category_id=None, query='', limit=MAX_DAPP_SEARCH_LIMIT, offset=0, filter_special=False):
     dapps = []
     query = '%' + query + '%'
 
@@ -43,10 +46,12 @@ async def get_apps_by_filter(db, category_id=None, query='', limit=MAX_DAPP_SEAR
                      "ARRAY_AGG(DACAT.category_id) AS categories "
                      "FROM dapps AS DA "
                      "JOIN dapp_categories AS DACAT ON DA.dapp_id = DACAT.dapp_id "
-                     "WHERE DA.name ~~* $1 "
-                     "GROUP BY DA.dapp_id "
-                     "HAVING $2 = ANY(ARRAY_AGG(DACAT.category_id)) "
-                     "ORDER BY DA.name OFFSET $3 LIMIT $4")
+                     "WHERE DA.name ~~* $1 ")
+        if filter_special:
+            query_str += "AND special = FALSE "
+        query_str += ("GROUP BY DA.dapp_id "
+                      "HAVING $2 = ANY(ARRAY_AGG(DACAT.category_id)) "
+                      "ORDER BY DA.name OFFSET $3 LIMIT $4")
 
         query_count = ("SELECT count (DA.dapp_id) FROM dapps as DA, dapp_categories AS CAT "
                        "WHERE CAT.category_id = $1 AND DA.dapp_id = CAT.dapp_id AND DA.name ~~* $2")
@@ -58,11 +63,15 @@ async def get_apps_by_filter(db, category_id=None, query='', limit=MAX_DAPP_SEAR
                      "ARRAY_AGG(DACAT.category_id) AS categories "
                      "FROM dapps AS DA "
                      "JOIN dapp_categories AS DACAT ON DA.dapp_id = DACAT.dapp_id "
-                     "WHERE DA.name ~~* $1 "
-                     "GROUP BY DA.dapp_id "
-                     "ORDER BY DA.name OFFSET $2 LIMIT $3")
+                     "WHERE DA.name ~~* $1 ")
+        if filter_special:
+            query_str += "AND special = FALSE "
+        query_str += ("GROUP BY DA.dapp_id "
+                      "ORDER BY DA.name OFFSET $2 LIMIT $3")
 
         query_count = ("SELECT count(dapp_id) FROM dapps WHERE name ~~* $1")
+        if filter_special:
+            query_count += " AND special = FALSE"
 
         query_params = [query, offset, limit]
         query_count_params = [query]
@@ -81,7 +90,24 @@ def get_categories_in_dapps(dapps):
 
     return list(categories)
 
-class FrontpageHandler(DatabaseMixin, BaseHandler):
+class SpecialFilterMixin:
+
+    @property
+    def should_filter_special_dapps(self):
+        agent = self.request.headers['User-Agent']
+        try:
+            if agent.startswith("Toshi/"):
+                ios_build = int(agent.split(' ')[0].split('/')[1])
+                return ios_build <= 150
+            elif agent.startswith("Android"):
+                android_build = int(agent.split(":")[-1])
+                return android_build <= 34
+            return False
+        except ValueError:
+            log.warning("Got unexpected user agent: {}".format(agent))
+            return False
+
+class FrontpageHandler(SpecialFilterMixin, DatabaseMixin, BaseHandler):
 
     async def get(self):
         async with self.db:
@@ -92,7 +118,9 @@ class FrontpageHandler(DatabaseMixin, BaseHandler):
             for category in categories:
                 category_id = category['category_id']
                 categories_map[category_id] = category['name']
-                dapps = await get_apps_by_category(category_id, self.db)
+                dapps = await get_apps_by_category(
+                    category_id, self.db,
+                    filter_special=self.should_filter_special_dapps)
                 sections.append({
                      'category_id' : category_id,
                      'dapps'       : dapps
@@ -103,7 +131,7 @@ class FrontpageHandler(DatabaseMixin, BaseHandler):
                 'categories' : categories_map
             })
 
-class DappSearchHandler(DatabaseMixin, BaseHandler):
+class DappSearchHandler(SpecialFilterMixin, DatabaseMixin, BaseHandler):
 
     async def get(self):
         async with self.db:
@@ -126,7 +154,9 @@ class DappSearchHandler(DatabaseMixin, BaseHandler):
 
             query = self.get_argument('query', '')
 
-            dapps, total = await get_apps_by_filter(self.db, category, query, limit, offset)
+            dapps, total = await get_apps_by_filter(
+                self.db, category, query, limit, offset,
+                filter_special=self.should_filter_special_dapps)
 
             used_categories = get_categories_in_dapps(dapps)
             all_categories = await self.db.fetch('SELECT * FROM categories')

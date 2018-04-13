@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS dapps (
     description VARCHAR,
     icon VARCHAR,
     cover VARCHAR,
+    special BOOLEAN DEFAULT FALSE,
     created TIMESTAMP WITHOUT TIME ZONE DEFAULT (now() AT TIME ZONE 'utc'),
     updated TIMESTAMP WITHOUT TIME ZONE DEFAULT (now() AT TIME ZONE 'utc'),
     rank INTEGER DEFAULT 0
@@ -21,4 +22,4 @@ CREATE TABLE IF NOT EXISTS dapp_categories (
     PRIMARY KEY (category_id, dapp_id)
 );
 
-UPDATE database_version SET version_number = 1;
+UPDATE database_version SET version_number = 2;
