@@ -9,6 +9,8 @@ DEFAULT_DAPP_SEARCH_LIMIT = 10
 MAX_DAPP_SEARCH_LIMIT = 100
 
 def map_dapp_json(dapp):
+    categories = dapp['categories']
+    categories = [cat for cat in categories if cat is not None]
     return {
         'dapp_id'       : dapp['dapp_id'],
         'name'          : dapp['name'],
@@ -16,7 +18,7 @@ def map_dapp_json(dapp):
         'description'   : dapp['description'],
         'icon'          : dapp['icon'],
         'cover'         : dapp['cover'],
-        'categories'    : dapp['categories']
+        'categories'    : categories
     }
 
 async def get_apps_by_category(category_id, db, filter_special=False):
@@ -62,7 +64,7 @@ async def get_apps_by_filter(db, category_id=None, query='', limit=MAX_DAPP_SEAR
         query_str = ("SELECT DA.dapp_id, DA.name, DA.url, DA.description, DA.icon, DA.cover, DA.rank, "
                      "ARRAY_AGG(DACAT.category_id) AS categories "
                      "FROM dapps AS DA "
-                     "JOIN dapp_categories AS DACAT ON DA.dapp_id = DACAT.dapp_id "
+                     "LEFT JOIN dapp_categories AS DACAT ON DA.dapp_id = DACAT.dapp_id "
                      "WHERE DA.name ~~* $1 ")
         if filter_special:
             query_str += "AND special = FALSE "
@@ -78,6 +80,7 @@ async def get_apps_by_filter(db, category_id=None, query='', limit=MAX_DAPP_SEAR
 
     db_dapps = await db.fetch(query_str, *query_params)
     db_count = await db.fetchval(query_count, *query_count_params)
+
     for db_dapp in db_dapps:
         dapps.append(map_dapp_json(db_dapp))
 

@@ -178,7 +178,16 @@ TEST_DAPP_DATA = [
      'https://www.toshi.org/0x00000000000000000000000017e58cf183800415_3ba268.png',
      datetime.datetime(2018, 2, 24, 16, 49, 16, 855046),
      datetime.datetime(2018, 2, 24, 16, 49, 16, 855046),
-     5)
+     5),
+    (1721937401460294689,
+     'ZZZZZZZZZZ',
+     'https://www.kpoptwo.io/',
+     'Kpopio2 is an online game where you can buy and sell Kpop celebrity cards with other players.',
+     'https://www.toshi.org/0x00000000000000000000000kop2.png',
+     datetime.datetime(2018, 2, 24, 13, 49, 16, 855046),
+     datetime.datetime(2018, 2, 24, 13, 49, 16, 855046),
+    6)
+
 ]
 
 TEST_CATEGORY_DATA = [
@@ -433,6 +442,13 @@ class DappSearchHandlerTest(DappsTestBase):
 
         self.assertDappSearchResults(body, TEST_QUERY, limit * 2, limit, len(DAPPS_WITH_QUERY_IN_NAME_SORTED),
                                      DAPPS_WITH_QUERY_IN_NAME_SORTED[limit * 2:], None)
+
+        resp = await self.fetch("/dapps?query={}".format('ZZZZZZZZZZ'))
+        self.assertResponseCodeEqual(resp, 200)
+        body = json_decode(resp.body)
+
+        self.assertDappSearchResults(body, 'ZZZZZZZZZZ', 0, 10, 1,
+                                     [TEST_DAPP_DATA[-1]], None)
 
     @gen_test
     @requires_database
