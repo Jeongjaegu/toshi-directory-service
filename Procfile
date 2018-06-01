@@ -1,1 +1,1 @@
-web: bin/start-stunnel python -m toshidirectory --port=$PORT
+web: python -m toshidirectory --port=$PORT
