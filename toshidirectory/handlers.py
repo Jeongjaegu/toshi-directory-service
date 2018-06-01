@@ -8,6 +8,10 @@ DAPPS_PER_CATEGORY = 4
 DEFAULT_DAPP_SEARCH_LIMIT = 10
 MAX_DAPP_SEARCH_LIMIT = 100
 
+IOS_CLIENT = 'ios'
+ANDROID_CLIENT = 'android'
+UNKNOWN_CLIENT = 'unknown'
+
 def map_dapp_json(dapp):
     categories = dapp['categories']
     categories = [cat for cat in categories if cat is not None]
@@ -21,13 +25,34 @@ def map_dapp_json(dapp):
         'categories'    : categories
     }
 
-async def get_apps_by_category(category_id, db, filter_special=False):
+def generate_filter_query(client_filter, filter_special, query_start="AND", table_name=None, include_nulls=False):
+    q = ""
+    if table_name:
+        prefix = "{}.".format(table_name)
+    else:
+        prefix = ""
+    if filter_special:
+        q += "{0} {1}special = FALSE ".format(query_start, prefix)
+        query_start = "AND"
+    if client_filter:
+        if include_nulls:
+            q += "{} ((".format(query_start)
+            query_start = ""
+        if client_filter == UNKNOWN_CLIENT:
+            q += "{0} {1}hidden_on != 'all' ".format(query_start, prefix)
+        else:
+            q += "{0} {1}hidden_on != 'all' AND {1}hidden_on != '{2}' ".format(query_start, prefix, client_filter)
+        if include_nulls:
+            q += ") OR {0}hidden_on IS NULL) ".format(prefix)
+    return q
+
+async def get_apps_by_category(category_id, db, client_filter=None, filter_special=False):
     dapps = []
     query_str = ("SELECT DA.dapp_id, DA.name, DA.url, DA.description, DA.icon, DA.cover, DA.rank, ARRAY_AGG(CAT.category_id) AS categories "
                  "FROM dapps DA "
                  "JOIN dapp_categories CAT ON DA.dapp_id = CAT.dapp_id ")
-    if filter_special:
-        query_str += "WHERE special = FALSE "
+    query_str += generate_filter_query(client_filter, filter_special, "WHERE", "DA")
+
     query_str += ("GROUP BY DA.dapp_id "
                   "HAVING $1 = ANY(ARRAY_AGG(CAT.category_id)) "
                   "ORDER BY DA.rank DESC, DA.name ASC LIMIT $2")
@@ -39,7 +64,7 @@ async def get_apps_by_category(category_id, db, filter_special=False):
 
     return dapps
 
-async def get_apps_by_filter(db, category_id=None, query='', limit=MAX_DAPP_SEARCH_LIMIT, offset=0, filter_special=False):
+async def get_apps_by_filter(db, category_id=None, query='', limit=MAX_DAPP_SEARCH_LIMIT, offset=0, client_filter=None, filter_special=False):
     dapps = []
     query = '%' + query + '%'
 
@@ -48,15 +73,20 @@ async def get_apps_by_filter(db, category_id=None, query='', limit=MAX_DAPP_SEAR
                      "ARRAY_AGG(DACAT.category_id) AS categories "
                      "FROM dapps AS DA "
                      "JOIN dapp_categories AS DACAT ON DA.dapp_id = DACAT.dapp_id "
+                     "JOIN categories AS CAT ON DACAT.category_id = CAT.category_id "
                      "WHERE DA.name ~~* $1 ")
-        if filter_special:
-            query_str += "AND special = FALSE "
+        query_str += generate_filter_query(client_filter, filter_special, table_name="DA")
+        query_str += generate_filter_query(client_filter, None, table_name="CAT", include_nulls=True)
         query_str += ("GROUP BY DA.dapp_id "
                       "HAVING $2 = ANY(ARRAY_AGG(DACAT.category_id)) "
                       "ORDER BY DA.name OFFSET $3 LIMIT $4")
 
-        query_count = ("SELECT count (DA.dapp_id) FROM dapps as DA, dapp_categories AS CAT "
-                       "WHERE CAT.category_id = $1 AND DA.dapp_id = CAT.dapp_id AND DA.name ~~* $2")
+        query_count = ("SELECT count(DISTINCT DA.dapp_id) FROM dapps as DA "
+                       "JOIN dapp_categories AS DACAT ON DA.dapp_id = DACAT.dapp_id "
+                       "JOIN categories AS CAT ON DACAT.category_id = CAT.category_id "
+                       "WHERE DACAT.category_id = $1 AND DA.name ~~* $2 ")
+        query_count += generate_filter_query(client_filter, filter_special, table_name="DA")
+        query_count += generate_filter_query(client_filter, None, table_name="CAT", include_nulls=True)
         query_count_params = [category_id, query]
 
         query_params = [query, category_id, offset, limit]
@@ -65,15 +95,19 @@ async def get_apps_by_filter(db, category_id=None, query='', limit=MAX_DAPP_SEAR
                      "ARRAY_AGG(DACAT.category_id) AS categories "
                      "FROM dapps AS DA "
                      "LEFT JOIN dapp_categories AS DACAT ON DA.dapp_id = DACAT.dapp_id "
+                     "LEFT JOIN categories AS CAT ON DACAT.category_id = CAT.category_id "
                      "WHERE DA.name ~~* $1 ")
-        if filter_special:
-            query_str += "AND special = FALSE "
+        query_str += generate_filter_query(client_filter, filter_special, table_name="DA")
+        query_str += generate_filter_query(client_filter, None, table_name="CAT", include_nulls=True)
         query_str += ("GROUP BY DA.dapp_id "
                       "ORDER BY DA.name OFFSET $2 LIMIT $3")
 
-        query_count = ("SELECT count(dapp_id) FROM dapps WHERE name ~~* $1")
-        if filter_special:
-            query_count += " AND special = FALSE"
+        query_count = ("SELECT count(DISTINCT DA.dapp_id) FROM dapps DA "
+                       "LEFT JOIN dapp_categories AS DACAT ON DA.dapp_id = DACAT.dapp_id "
+                       "LEFT JOIN categories AS CAT ON DACAT.category_id = CAT.category_id "
+                       "WHERE DA.name ~~* $1 ")
+        query_count += generate_filter_query(client_filter, filter_special, table_name="DA")
+        query_count += generate_filter_query(client_filter, None, table_name="CAT", include_nulls=True)
 
         query_params = [query, offset, limit]
         query_count_params = [query]
@@ -86,14 +120,30 @@ async def get_apps_by_filter(db, category_id=None, query='', limit=MAX_DAPP_SEAR
 
     return dapps, db_count
 
-def get_categories_in_dapps(dapps):
+def filter_categories_in_dapps(dapps, valid_categories=None):
     categories = set()
     for app in dapps:
+        if valid_categories:
+            app['categories'] = list(set(app['categories']).intersection(valid_categories))
         categories = categories.union(app['categories'])
 
-    return list(categories)
+    return sorted(list(categories))
 
 class SpecialFilterMixin:
+
+    @property
+    def get_client_type(self):
+        agent = self.request.headers['User-Agent']
+        try:
+            if agent.startswith("Toshi/"):
+                return IOS_CLIENT
+            elif agent.startswith("Android"):
+                return ANDROID_CLIENT
+            return UNKNOWN_CLIENT
+        except ValueError:
+            log.warning("Got unexpected user agent: {}".format(agent))
+            return UNKNOWN_CLIENT
+
 
     @property
     def should_filter_special_dapps(self):
@@ -113,9 +163,10 @@ class SpecialFilterMixin:
 class FrontpageHandler(SpecialFilterMixin, DatabaseMixin, BaseHandler):
 
     async def get(self):
+        client_filter = self.get_client_type
         async with self.db:
-
-            categories = await self.db.fetch('SELECT * FROM categories')
+            categories = await self.db.fetch("SELECT * FROM categories WHERE hidden_on != 'all'{} ORDER BY category_id ASC".format(
+                " AND hidden_on != '{}'".format(client_filter) if client_filter != UNKNOWN_CLIENT else ""))
             categories_map = {}
             sections = []
             for category in categories:
@@ -123,6 +174,7 @@ class FrontpageHandler(SpecialFilterMixin, DatabaseMixin, BaseHandler):
                 categories_map[category_id] = category['name']
                 dapps = await get_apps_by_category(
                     category_id, self.db,
+                    client_filter=client_filter,
                     filter_special=self.should_filter_special_dapps)
                 sections.append({
                      'category_id' : category_id,
@@ -137,6 +189,7 @@ class FrontpageHandler(SpecialFilterMixin, DatabaseMixin, BaseHandler):
 class DappSearchHandler(SpecialFilterMixin, DatabaseMixin, BaseHandler):
 
     async def get(self):
+        client_filter = self.get_client_type
         async with self.db:
             try:
                 offset = int(self.get_argument('offset', 0))
@@ -159,10 +212,12 @@ class DappSearchHandler(SpecialFilterMixin, DatabaseMixin, BaseHandler):
 
             dapps, total = await get_apps_by_filter(
                 self.db, category, query, limit, offset,
+                client_filter=client_filter,
                 filter_special=self.should_filter_special_dapps)
-
-            used_categories = get_categories_in_dapps(dapps)
-            all_categories = await self.db.fetch('SELECT * FROM categories')
+            all_categories = await self.db.fetch("SELECT * FROM categories WHERE hidden_on != 'all'{} ORDER BY category_id ASC".format(
+                " AND hidden_on != '{}'".format(client_filter) if client_filter != UNKNOWN_CLIENT else ""))
+            all_category_ids = [cat['category_id'] for cat in all_categories]
+            used_categories = filter_categories_in_dapps(dapps, all_category_ids)
             categories = {}
 
             for cat in all_categories:

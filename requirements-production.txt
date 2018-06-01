@@ -1,1 +1,1 @@
--e git+https://github.com/toshiapp/toshi-services-lib.git@production#egg=toshi-services
+-e git+https://github.com/toshiapp/toshi-services-lib.git@v0.0.12#egg=toshi-services
