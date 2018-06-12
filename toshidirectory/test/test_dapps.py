@@ -379,6 +379,10 @@ class DappsTestBase(AsyncHandlerTest):
                     "UPDATE categories SET hidden_on = 'all' WHERE category_id = $1",
                     [(e,) for e in TEST_ALL_HIDDEN_CATEGORIES])
 
+def exist_valid_dapp_for_category(category, hidden_dapps):
+    dapps = [ dapp for dapp in TEST_DAPP_DATA if dapp[0] not in hidden_dapps and dapp[0] not in TEST_ALL_HIDDEN_DAPPS and (dapp[0], category) in TEST_DAPP_CATEGORY_DATA]
+    return len(dapps) > 0
+
 class FrontpageHandlerTest(DappsTestBase):
 
     @gen_test
@@ -401,8 +405,9 @@ class FrontpageHandlerTest(DappsTestBase):
             self.assertIn("categories", body)
 
             test_category_data = [
-                cat for cat in TEST_CATEGORY_DATA if cat[0] not in hidden_categories and cat[0] not in TEST_ALL_HIDDEN_CATEGORIES
+                cat for cat in TEST_CATEGORY_DATA if cat[0] not in hidden_categories and cat[0] not in TEST_ALL_HIDDEN_CATEGORIES and exist_valid_dapp_for_category(cat[0], hidden_dapps)
             ]
+
 
             # make sure all the categories are listed
             self.assertEqual(len(body['categories']), len(test_category_data))

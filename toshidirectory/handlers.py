@@ -171,15 +171,16 @@ class FrontpageHandler(SpecialFilterMixin, DatabaseMixin, BaseHandler):
             sections = []
             for category in categories:
                 category_id = category['category_id']
-                categories_map[category_id] = category['name']
                 dapps = await get_apps_by_category(
                     category_id, self.db,
                     client_filter=client_filter,
                     filter_special=self.should_filter_special_dapps)
-                sections.append({
-                     'category_id' : category_id,
-                     'dapps'       : dapps
-                })
+                if len(dapps) != 0:
+                    categories_map[category_id] = category['name']
+                    sections.append({
+                         'category_id' : category_id,
+                         'dapps'       : dapps
+                    })
 
             self.write({
                 'sections'   : sections,
