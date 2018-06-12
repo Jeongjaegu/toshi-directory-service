@@ -408,7 +408,6 @@ class FrontpageHandlerTest(DappsTestBase):
                 cat for cat in TEST_CATEGORY_DATA if cat[0] not in hidden_categories and cat[0] not in TEST_ALL_HIDDEN_CATEGORIES and exist_valid_dapp_for_category(cat[0], hidden_dapps)
             ]
 
-
             # make sure all the categories are listed
             self.assertEqual(len(body['categories']), len(test_category_data))
             # make sure there is a section per category
